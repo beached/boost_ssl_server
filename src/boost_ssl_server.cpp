@@ -79,10 +79,10 @@ class server {
 	server( boost::asio::io_service &io_service, uint16_t port )
 	    : m_io_service{io_service}
 	    , m_acceptor{io_service, boost::asio::ip::tcp::endpoint( boost::asio::ip::tcp::v4( ), port )}
-	    , m_context{io_service, boost::asio::ssl::context::sslv23} {
+	    , m_context{io_service, boost::asio::ssl::context::tlsv12_server} {
 
 		m_context.set_options( boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2 |
-		                       boost::asio::ssl::context::single_dh_use );
+		                       boost::asio::ssl::context::no_sslv3 | boost::asio::ssl::context::single_dh_use );
 		m_context.set_password_callback( [this]( auto, auto ) -> std::string { return this->get_password( ); } );
 		m_context.use_certificate_chain_file( "server.pem" );
 		m_context.use_private_key_file( "server.pem", boost::asio::ssl::context::pem );
