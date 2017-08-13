@@ -10,6 +10,7 @@
 // Copyright (c) 2017 Darrell Wright - Adapted callbacks to use lambda's
 //
 
+#include <array>
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <cstdlib>
@@ -20,12 +21,11 @@ typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> ssl_socket;
 
 class session {
 	ssl_socket m_socket;
-	enum { max_length = 1024 };
-	char m_data[max_length];
+	std::array<char, 1024> m_data;
 
   public:
 	session( boost::asio::io_service &io_service, boost::asio::ssl::context &context )
-	    : m_socket{io_service, context}, m_data{0} {}
+	    : m_socket{io_service, context}, m_data{} {}
 
 	ssl_socket::lowest_layer_type &socket( ) {
 		return m_socket.lowest_layer( );
@@ -39,7 +39,7 @@ class session {
 
 	void handle_handshake( boost::system::error_code const &error ) {
 		if( !error ) {
-			m_socket.async_read_some( boost::asio::buffer( m_data, max_length ),
+			m_socket.async_read_some( boost::asio::buffer( m_data.data( ), m_data.size( ) ),
 			                          [this]( boost::system::error_code const &err, size_t bytes_transferred ) {
 				                          handle_read( err, bytes_transferred );
 			                          } );
@@ -51,7 +51,7 @@ class session {
 	void handle_read( boost::system::error_code const &error, size_t bytes_transferred ) {
 		if( !error ) {
 			boost::asio::async_write(
-			    m_socket, boost::asio::buffer( m_data, bytes_transferred ),
+			    m_socket, boost::asio::buffer( m_data.data( ), bytes_transferred ),
 			    [this]( boost::system::error_code const &err, auto const & ) { this->handle_write( err ); } );
 		} else {
 			delete this;
@@ -60,7 +60,7 @@ class session {
 
 	void handle_write( boost::system::error_code const &error ) {
 		if( !error ) {
-			m_socket.async_read_some( boost::asio::buffer( m_data, max_length ),
+			m_socket.async_read_some( boost::asio::buffer( m_data.data( ), m_data.size( ) ),
 			                          [this]( boost::system::error_code const &err, size_t bytes_transferred ) {
 				                          handle_read( err, bytes_transferred );
 			                          } );
