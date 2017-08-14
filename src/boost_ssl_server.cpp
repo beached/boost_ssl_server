@@ -88,7 +88,8 @@ class server {
 		m_context.use_private_key_file( "server.pem", boost::asio::ssl::context::pem );
 		m_context.use_tmp_dh_file( "dh512.pem" );
 
-		auto new_session = new session( m_io_service, m_context );
+		auto new_session = new session{m_io_service, m_context};
+		assert( new_session );
 		m_acceptor.async_accept( new_session->socket( ), [this, new_session]( boost::system::error_code const &error ) {
 			handle_accept( new_session, error );
 		} );
@@ -101,7 +102,8 @@ class server {
 	void handle_accept( session *new_session, boost::system::error_code const &error ) {
 		if( !error ) {
 			new_session->start( );
-			new_session = new session( m_io_service, m_context );
+			new_session = new session{m_io_service, m_context};
+			assert( new_session );
 			m_acceptor.async_accept(
 			    new_session->socket( ),
 			    [this, new_session]( boost::system::error_code const &err ) { handle_accept( new_session, err ); } );
@@ -120,7 +122,7 @@ int main( int argc, char *argv[] ) {
 
 		boost::asio::io_service io_service;
 
-		server s( io_service, static_cast<uint16_t>( strtol( argv[1], nullptr, 10 ) ) );
+		server s{io_service, static_cast<uint16_t>( strtol( argv[1], nullptr, 10 ) )};
 
 		io_service.run( );
 	} catch( std::exception &e ) {
